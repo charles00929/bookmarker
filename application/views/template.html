@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+{% autoescape false %}
+<html>
+	<head>
+	<title>✎myBookTag</title>
+		{% for js in jsfiles %}
+			<script type="text/javascript" src="{{ js }}"></script>
+		{% endfor %}
+		{% for css in cssfiles %}
+			<link rel="stylesheet" type="text/css" href="{{ css }}">
+		{% endfor%}
+	</head>
+	<body>
+		<div id='header'>{{ header }}</div>
+		<div id='menu'>{{ menu }}</div>
+		<div id='content'>{{ content }}</div>
+		<div id='footer'>{{ footer }}</div>
+	</body>
+</html>
+{% endautoescape %}

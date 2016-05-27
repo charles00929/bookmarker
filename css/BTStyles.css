@@ -1,0 +1,20 @@
+.tag,
+.mtag{
+	margin-top:10px;
+	margin-bottom:10px;
+	padding:3px;
+	border-radius: 5px;
+	border:1px solid gray;
+	min-width: 40px;
+	min-height: 20px;
+	display: inline-block;
+	text-align: center;
+}
+.edit_m,.delete_m{
+	min-width: 20px;
+}
+
+.highlighted_container{
+	border: dashed gray 5px;
+	padding:5px;
+}

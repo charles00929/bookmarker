@@ -1,0 +1,17 @@
+{% autoescape false %}
+<a id='menu-material' class='btn btn-warning' data-mid='404'>新增書籤</a>
+<a id='menu-tag'  class='btn btn-success'>標籤管理</a>
+<a id='menu-search' class='btn btn-info'>搜尋</a>
+<p style='float:right;padding-right:80px;'>{{ name }}</p>
+
+<div id='blackout' class='invisible' style='
+	opacity:0.5;
+	width:100%;
+	height:100%;
+	position: fixed;
+	top:0;
+	left:0;
+	background-color: #000;
+	z-index:5;
+'></div>
+{% endautoescape %}
