@@ -4,8 +4,8 @@
 		<h2>Mark it!</h2>
 		<div>標題:<input type='text' name='title' value=''></div>
 		<div>網址:<input type='text' name='url' value=''>開頭為 http://</div>
-		<div>公開的<input type='checkbox' name='public' value='true'></div>
 		<div class='tagpool' style='height:100px'></div>
-		<p><input type='submit'></p>
+		<div><input type='hidden' name='bid' value='0'></div>
+		<p><button name='submit'>Save</button><button name='reset'>Reset</button></p>
 	</form>
 </div>

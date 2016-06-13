@@ -24,7 +24,7 @@
 			$tag_on = $this->GetTagOnFromDB($this->FetchBookmarkID($bookmarks));
 
 			foreach ($tag_on as $match) {
-				array_push($bookmarks[$match->b_id]->tags,$match->t_id);
+				array_push($bookmarks[$match->bid]->tags,$match->tid);
 			}
 			$jsonObj = array(
 				'bookmarks' => $bookmarks,
@@ -34,65 +34,96 @@
 		}
 
 		public function SetTag($tagData){
-			$sql = "INSERT INTO {$this->tagsTableName} (t_id,u_id,title,font_color,bg_color)
-				VALUE(?,?,'?','?','?')
-				ON DUPLICATE KEY UPDATE t_id = ?";
-			$result = $this->db->query($sql,$tagData);
+			$sql = "INSERT INTO {$this->tagsTableName} (tid,uid,title,font_color,bg_color)
+				VALUE(?,?,?,?,?)
+				ON DUPLICATE KEY UPDATE title = ?,font_color = ?,bg_color = ?";
+			$this->db->query($sql,$tagData);
+			return $this->db->insert_id();
 		}
+		public function DeleteTag($tagData){
+			$tagsql = "DELETE FROM {$this->tagsTableName} WHERE tid = ?";
+			$this->db->query($tagsql,$tagData);
+			return $this->db->affected_rows();
+		}
+		public function SetBookmark($bookmarkData){
+			$sql = "INSERT INTO {$this->bookmarkTableName} (bid,uid,title,url)
+				VALUE(?,?,?,?)
+				ON DUPLICATE KEY UPDATE title = ?,url = ?";
+			$this->db->query($sql,$bookmarkData);
+			return $this->db->insert_id();
 
+		}
+		public function DeleteBookmark($bookmarkData){
+			$tagsql = "DELETE FROM {$this->bookmarkTableName} WHERE bid = ?";
+			$this->db->query($tagsql,$bookmarkData);
+			return $this->db->affected_rows();
+		}
+		public function SetTagon($bid,$tags){
+			$tagon = array();
+			foreach($tags as $tag){
+				array_push($tagon, array('bid'=>$bid,'tid'=>$tag));
+			}
+			$this->db->insert_batch($this->tagOnTableName, $tagon);
+			return $this->db->affected_rows();
+		}
+		public function DeleteTagon($by,$id){
+			$sql = "DELETE FROM {$this->tagOnTableName} WHERE {$by} = ?";
+			$this->db->query($sql,$id);
+			return $this->db->affected_rows();		
+		}
 		private function GetBookmarksFromDB($id){
-			$sql = 'SELECT * FROM '.$this->bookmarkTableName .' WHERE u_id = ?';
+			$sql = 'SELECT * FROM '.$this->bookmarkTableName .' WHERE uid = ?';
 			$list = $this->db->query($sql,$id)->result();
 			$result = array();
 			foreach ($list as  $row) {
 				$obj = new BookmarkData();
-				$obj->b_id = $row->b_id;
-				$obj->u_id = $row->u_id;
+				$obj->bid = $row->bid;
+				$obj->uid = $row->uid;
 				$obj->title = $row->title;
 				$obj->url = $row->url;
 				//array_push($result, $obj);
-				$result[$obj->b_id] = $obj;
+				$result[$obj->bid] = $obj;
 			}
 			return $result;
 		}
 		private function GetTagsFromDB($id){
-			$sql = 'SELECT * FROM ' . $this->tagsTableName . ' WHERE u_id = ?';
+			$sql = 'SELECT * FROM ' . $this->tagsTableName . ' WHERE uid = ?';
 			$list = $this->db->query($sql,$id)->result();
 			$result = array();
 			foreach($list as $row){
 				$obj = new TagData();
-				$obj->t_id = $row->t_id;
-				$obj->u_id = $row->u_id;
+				$obj->tid = $row->tid;
+				$obj->uid = $row->uid;
 				$obj->title = $row->title;
 				$obj->font_color = $row->font_color;
 				$obj->bg_color = $row->bg_color;
-				$result[$obj->t_id] = $obj;
+				$result[$obj->tid] = $obj;
 			}
 			return $result;
 		}
 
-		private function GetTagOnFromDB($b_ids){
-			$sql = 'SELECT * FROM ' . $this->tagOnTableName . ' WHERE b_id IN ?';
-			$list = $this->db->query($sql,array((array)$b_ids))->result();
+		private function GetTagOnFromDB($bids){
+			$sql = 'SELECT * FROM ' . $this->tagOnTableName . ' WHERE bid IN ?';
+			$list = $this->db->query($sql,array((array)$bids))->result();
 			return $list;
 
 		}
 
 
 		private function FetchBookmarkID($bookmarks){
-			$b_ids = array();
+			$bids = array();
 			foreach($bookmarks as $bk){
-				array_push($b_ids,$bk->b_id);
+				array_push($bids,$bk->bid);
 			}
-			return $b_ids;
+			return $bids;
 		}
 	}
 
 
 
 	class BookmarkData{
-		public $b_id = 0;
-		public $u_id = 0;
+		public $bid = 0;
+		public $uid = 0;
 		public $title = '';
 		public $url = '';
 		public $tags = array();

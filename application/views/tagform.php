@@ -18,8 +18,8 @@
 				<td ><input type='text' name='bg' class='pickcolor' value='ffffff' style='width:100px'></td>
 			</tr>
 			<tr>
-				<td><input type='hidden' name='_id' value=''></td>
-				<td><!-- <input type='submit'> --></td>
+				<td><input type='hidden' name='tid' value=''></td>
+				<td><button name='reset'>Reset</button></td>
 			</tr>
 		</table>
 		<span class='tag creating_tag' id='sample'>(sample)</span>

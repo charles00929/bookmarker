@@ -3,7 +3,7 @@
 		private $userTableName = 'user';
 
 		public function IsLogined(){
-			return $this->GetSessionUid() > 0;
+			return $this->GetUid() > 0;
 		}
 
 		public function Login($username,$md5Pw){
@@ -11,7 +11,7 @@
 			$sql = "SELECT uid FROM ". $this->userTableName ." WHERE username = ? AND password = ?";
 			$result = $this->db->query($sql,array($username,$md5Pw))->result();
 			$uid = isset($result[0]->uid)? $result[0]->uid:0;
-			$this->SetSessionUid($uid);
+			$this->SetUid($uid);
 			return isset($result[0]->uid);
 			}catch(Exception $e){
 				echo '.............';
@@ -20,12 +20,13 @@
 
 		}
 		public function Logout(){
-			
+			unset($_SESSION[sessionKey_Uid]);
+			redirect('/');
 		}
-		public function SetSessionUid($uid){
+		public function SetUid($uid){
 			$_SESSION[sessionKey_Uid] = $uid;
 		}
-		public function GetSessionUid(){
+		public function GetUid(){
 			return isset($_SESSION[sessionKey_Uid]) ? $_SESSION[sessionKey_Uid] : 0;
 		}
 		public function __construct(){

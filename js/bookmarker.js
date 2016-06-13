@@ -3,7 +3,7 @@ $(function(){
 		userdata:{}
 		,loadFromEnd:function(){
 			$.ajax({
-				url:"/ajaxhandler/bookmark/loading"
+				url:"/handler/bookmark/loading"
 				,method:"post"
 				,dataType:"json"
 				,success:function(response){
@@ -15,43 +15,97 @@ $(function(){
 				}
 			});
 		}
-		,search:function(type,tids){
-			if(type == 'OR'){
-
-			}else if(type == 'AND'){
-
-			}else if(type == 'LIKE'){
-
-			}
-		}
-		,createBookmark:function(){}
-		,modifyBookmark:function(){}
-		,deleteBookmark:function(){}
-		,createTag:function(){}
-		,modifyTag:function(tagData){
+		,modifyBookmark:function(bookmarkData){
 			$.ajax({
-				url:"/index.php/ajaxhandler/bookmark/tu"
+				url:"/handler/bookmark/bu"
 				,method:"post"
+				,data:bookmarkData
 				,dataType:"json"
 				,success:function(response){
-					if(response.tid == 0){
-						//fail
-					}else{
+					if(response.bid != 0){
 						//success
-						tagData.tid = response.tid;
-						$.bookmarker.userdata.tags[response.tid] = tagData;
-						var tagView = $.bookmarkerFront.createTagView(response.tid);
-						$.bookmarkerFront.tagToDraggable(tagView);
-						$.bookmarkerFront.tagList.append(tagView);
+						if(bookmarkData.bid == 0){
+							//created
+							bookmarkData.bid = response.bid;
+							$.bookmarker.userdata.bookmarks[response.bid] = bookmarkData;
+							var draggableBookmark = $.bookmarkerFront.createBookmarkView(response.bid);
+							$.bookmarkerFront.bookmarkList.append(draggableBookmark);
+						}else{
+							//modified
+							$('.bookmark-row[name=bookmark-' + response.bid + ']')
+								.find(".bookmark-url")
+								.attr("href",bookmarkData.url)
+								.html(bookmarkData.title);
+							//to add tags
+							for(var i in bookmarkData.tags){
+								$('.bookmark-row[name=bookmark-' + response.bid + ']').find(".tagscolumn").append($.bookmarkerFront.createTagView(bookmarkData.tags[i]));
+							}
+						}
+					}else{
+						//fail
 					}
-					$('#tag_list').droppable('enable');
 				}
 				,error:function(){
-					$('#tag_list').droppable('enable');
+
 				}
 			});
 		}
-		,deleteTag:function(){}
+		,deleteBookmark:function(bookmarkData){
+			$.ajax({
+				url:"/handler/bookmark/bd"
+				,method:"post"
+				,data:bookmarkData
+				,dataType:"json"
+				,success:function(response){
+					$('.bookmark-row[name=bookmark-' + response.bid + ']').remove();
+				}
+				,error:function(){}
+			});
+		}
+		,modifyTag:function(tagData){//creating as modified id = 0
+			$.ajax({
+				url:"/handler/bookmark/tu"
+				,method:"post"
+				,data:tagData
+				,dataType:"json"
+				,success:function(response){
+					if(response.tid == 0){//fail
+						
+					}else{//success
+						if(tagData.tid == 0){//added new
+							tagData.tid = response.tid;
+							$.bookmarker.userdata.tags[response.tid] = tagData;
+							var tagView = $.bookmarkerFront.createTagView(response.tid);
+							$.bookmarkerFront.tagToDraggable(tagView);
+							$.bookmarkerFront.tagList.append(tagView);
+						}else{//modified
+							$('.tag[name=tag-' + response.tid + ']')
+								.css('color','#' + tagData.font_color)
+								.css('background-color','#' + tagData.bg_color)
+								.html(tagData.title);
+						}
+					}
+					$.bookmarkerFront.tagList.droppable('enable');
+				}
+				,error:function(){
+					$.bookmarkerFront.tagList.droppable('enable');
+				}
+			});
+		}
+		,deleteTag:function(tagData){
+			$.ajax({
+				url:"/handler/bookmark/td"
+				,method:"post"
+				,data:tagData
+				,dataType:"json"
+				,success:function(response){
+					$('.tag[name=tag-' + response.tid + ']').remove();
+				}
+				,error:function(){
+
+				}
+			});
+		}
 	}
 	$.bookmarkerFront = {
 		viewModel:$.bookmarker
@@ -69,7 +123,6 @@ $(function(){
 			//to display bookmarkers data
 			for(var i in this.viewModel.userdata.bookmarks){
 				var draggableBookmark = this.createBookmarkView(i);
-				draggableBookmark.addClass('draggable_bookmark');
 				this.bookmarkList.append(draggableBookmark);
 			}
 			//It should extract to a function 
@@ -96,12 +149,57 @@ $(function(){
 			style.appendTo('head');
 
 		}
+		,search:function(){
+			var tids = []
+			,logic = $('input[name=logic]:checked')
+			,bookmarks = $('.bookmark-row');
+			//fetch tag id
+			$('#search_form').find('.tag').each(function(i){
+				tids.push($(this).data('tid'));
+			});
+			//before filter
+			if(logic.val() == 'no-tag'){
+				bookmarks.addClass('invisible');
+			}else if(tids.length == 0){
+				bookmarks.removeClass('invisible');
+			}else if(logic.val() == 'or'){
+				bookmarks.addClass('invisible');
+			}else if(logic.val() == 'and'){
+				bookmarks.removeClass('invisible');
+			}
+
+			if(logic.val() == 'no-tag'){
+				$('.bookmark-row.invisible').each(function(i){
+					if($(this).has('.tag').length == 0){
+						$(this).removeClass('invisible');
+					}
+				});
+			}
+
+			for(index in tids){
+				var tid = tids[index];
+				if(logic.val() == 'or'){
+					$('.bookmark-row.invisible').each(function(i){
+						if($(this).has('.tag[name=tag-' + tid + ']').length == 1){
+							$(this).removeClass('invisible');
+						}
+					});
+				}else if(logic.val() == 'and'){
+					$('.bookmark-row:not(.invisible)').each(function(i){
+						if($(this).has('.tag[name=tag-' + tid + ']').length != 1){
+							$(this).addClass('invisible');
+						}
+					});
+				}
+			}//for	
+		}
+
 		,createTagView:function(tid){
 			var tagTemp = this.tagTemplate.clone();
 			var tag = this.viewModel.userdata.tags[tid];
 			//set tag template with data
 			tagTemp.removeClass("template")
-				.addClass('tag-'+tid)
+				.attr('name','tag-'+tid)
 				.css("color",'#'+tag.font_color)
 				.css("background-color",'#'+tag.bg_color)
 				.html(tag.title)
@@ -125,7 +223,8 @@ $(function(){
 				//set template with data
 				temp.removeClass("template")
 					.data('bid',bid)
-					.show()
+					.attr('name','bookmark-' + bid)
+					.css('display','')
 					.find(".bookmark-url")
 					.attr("href",bk.url)
 					.html(bk.title);
@@ -158,9 +257,9 @@ $(function(){
 	$.bookmarkerFront.searchForm.hide();
 	$.bookmarkerFront.tagForm.hide();
 
-	//colpaick is not MAINTAIN any more.
-	//and it has no document .....
+	//colpaick is not MAINTAIN any more and has no document also.....
 	//so please change other plugin
+	/**tag form binding**/
 	$('.pickcolor').colpick({
 		layout:'hex',
 		submit:0,
@@ -178,13 +277,52 @@ $(function(){
 			}
 		}
 	}).keyup(function(){
-		//update color by text
-		$(this).colpickSetColor(this.value);
+		$(this).colpickSetColor(this.value);//update color by text
 	});
+
 	$.bookmarkerFront.tagForm.find('[name=name]').keyup(function(){
 		$('#sample').html($(this).val());
 	});
-	//binding
+	$.bookmarkerFront.tagForm.find('button.btn-close').click(function(){
+		$.bookmarkerFront.tagForm.hide();
+	});
+	$.bookmarkerFront.tagForm.find('[name=reset]').click(function(){
+		var tagForm = $.bookmarkerFront.tagForm;
+		tagForm.find('[name=tid]').val(0);
+		tagForm.find('[name=font]').val('000000').keyup();
+		tagForm.find('[name=bg]').val('ffffff').keyup();
+		tagForm.find('[name=name]').val('(Sample)').keyup();
+	});
+	$.bookmarkerFront.tagForm.find('form').submit(function(){
+		return false;
+	});
+	/** bookmark form binding**/
+	$.bookmarkerFront.bookmarkForm.find('form').submit(function(){
+		return false;
+	});
+	$.bookmarkerFront.bookmarkForm.find('[name=submit]').click(function(){
+		var form = $.bookmarkerFront.bookmarkForm;
+		var tags = [];
+		form.find('.tagpool>.tag').each(function(){
+			tags.push($(this).data('tid'));
+		});
+		var bookmarkData = {
+			bid:form.find('[name=bid]').val()
+			,url:form.find('[name=url]').val()
+			,title:form.find('[name=title]').val()
+			,tags:tags
+		};
+		$.bookmarker.modifyBookmark(bookmarkData);
+	});
+	$.bookmarkerFront.bookmarkForm.find('[name=reset]').click(function(){
+		var form = $.bookmarkerFront.bookmarkForm;
+		form.find('[name=title]').val('');
+		form.find('[name=url]').val('');
+		form.find('[name=bid]').val(0);
+		form.find('.tagpool').html('');
+	});
+
+	//menu button binding
 	$('#newbookmarker-btn').click(function(){
 		$.bookmarkerFront.bookmarkForm.show();
 		$.bookmarkerFront.searchForm.hide();
@@ -204,17 +342,19 @@ $(function(){
 	$.bookmarkerFront.bookmarkForm.find('button.btn-close').click(function(){
 		$.bookmarkerFront.bookmarkForm.hide();
 	});
-	$.bookmarkerFront.tagForm.find('button.btn-close').click(function(){
-		$.bookmarkerFront.tagForm.hide();
-	});
+
 	$.bookmarkerFront.searchForm.find('button.btn-close').click(function(){
 		$.bookmarkerFront.searchForm.hide();
 	});
-	// form binding
-	$('#tag_form').find('form').submit(function(){
-		return false;
+	//filted form binding
+	$('input[name=logic]').on('change',$.bookmarkerFront.search);
+	$('button[name=cancel]').on('click',function(){
+		$('#search_form').find('.tagpool').html('');
+		$.bookmarkerFront.search();
 	});
-
+	$.bookmarkerFront.searchForm.find('[name=nonetag]').click(function(){
+		$('#search_form').find('.tagpool').html('');
+	});
 	//drag & drop initialize
 	// dragger
 	$('#sample').data('tid',0);
@@ -242,7 +382,7 @@ $(function(){
 			}else if(tag.hasClass('creating_tag')){
 				var form = $.bookmarkerFront.tagForm.find('form');
 				var tagData = {
-					tid:tag.data('tid')
+					tid:form.find('[name=tid]').val()
 					,title:form.find('[name=name]').val()
 					,font_color:form.find('[name=font]').val()
 					,bg_color:form.find('[name=bg]').val()
@@ -260,7 +400,8 @@ $(function(){
 		,drop:function(event,ui){
 			var form = $(event.target);
 			var tagData = $.bookmarker.userdata.tags[ui.draggable.data('tid')];
-			form.find('[name=name]').val(tagData.title);
+			form.find('[name=tid]').val(tagData.tid);
+			form.find('[name=name]').val(tagData.title).keyup();
 			form.find('[name=font]').val(tagData.font_color).keyup();
 			form.find('[name=bg]').val(tagData.bg_color).keyup();
 		}
@@ -274,9 +415,10 @@ $(function(){
 		,drop:function(event,ui){
 			var tag = ui.draggable;
 			var tagView = $.bookmarkerFront.createTagView(tag.data('tid'));
-			tagView.addClass('used_tag');
+			tagView.addClass('filted_tag');
 			$.bookmarkerFront.tagToDraggable(tagView);
 			$(this).append(tagView);
+			$.bookmarkerFront.search();
 		}
 	});
 	$('#bookmark_form').find('.tagpool').droppable({
@@ -301,6 +443,7 @@ $(function(){
 		,drop:function(event,ui){
 			var form = $(event.target);
 			var bookmarkData = $.bookmarker.userdata.bookmarks[ui.draggable.data('bid')];
+			form.find('[name=bid]').val(bookmarkData.bid);
 			form.find('[name=title]').val(bookmarkData.title);
 			form.find('[name=url]').val(bookmarkData.url);
 			form.find('.tagpool').html('');
@@ -316,6 +459,29 @@ $(function(){
 	$('#delete_form').droppable({
 		activeClass:'highlighted_container'
 		,drop:function(event,ui){
+			if(ui.draggable.hasClass('draggable_tag')){
+				var tag = ui.draggable;
+				//remove timing is different
+				if(tag.hasClass('filted_tag')){
+					tag.remove();
+					$.bookmarkerFront.search();
+				}else if(tag.hasClass('used_tag')){
+
+				}else{
+					if(confirm('Are you sure to delete this tag ?')){
+						var tagData = {'tid':tag.data('tid')}
+						$.bookmarker.deleteTag(tagData);
+					}
+				}
+			}else if(ui.draggable.hasClass('draggable_bookmark')){
+				var bookmark = ui.draggable;
+				if(confirm('Are you sure to delete this bookmark ?')){
+					var bookmarkData = {bid:bookmark.data('bid')};
+					$.bookmarker.deleteBookmark(bookmarkData);
+				}
+			}
+
+
 
 		}
 	});
