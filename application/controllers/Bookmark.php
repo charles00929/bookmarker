@@ -10,6 +10,7 @@ class Bookmark extends BWTV_Controller {
 		$this->setBlock('header','BWTV_Layout/header');
 		$this->setBlock('footer','BWTV_Layout/footer');
 		$this->setBlock('main','main json');
+		$this->setBlock('main','help');
 		$this->setBlock('L_side','tagform');
 		$this->setBlock('L_side','bookmarkform');
 		$this->setBlock('L_side','searchform');

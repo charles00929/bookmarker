@@ -45,15 +45,15 @@ class Handler extends BWTV_Controller {
 				$data = array(
 					$this->input->post('bid')
 					);
-				$bid = $this->Bookmarkmodel->DeleteBookmark($data);
-				$bid = $bid == 0 ? false : true;
+				$sqlresult = $this->Bookmarkmodel->DeleteBookmark($data);
+				$sqlresult = $sqlresult == 0 ? false : true;
 
-				if($bid != 0){
-					$this->Bookmarkmodel->DeleteTagon('bid',$bid);
+				if($sqlresult){
+					$this->Bookmarkmodel->DeleteTagon('bid',$this->input->post('bid'));
 				}
 				$result = array(
 					'bid' => $this->input->post('bid')
-					,'success' => $bid
+					,'success' => $sqlresult
 					);
 				$response = json_encode($result);
 			break;
@@ -86,6 +86,9 @@ class Handler extends BWTV_Controller {
 					);
 				$sqlresult = $this->Bookmarkmodel->DeleteTag($data);
 				$sqlresult = $sqlresult == 0 ? false : true;
+				if($sqlresult){
+					$this->Bookmarkmodel->DeleteTagon('tid',$this->input->post('tid'));
+				}
 				$result = array(
 					'tid' => $this->input->post('tid')
 					,'success' => $sqlresult

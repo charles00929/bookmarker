@@ -21,7 +21,6 @@
 		}
 		public function Logout(){
 			unset($_SESSION[sessionKey_Uid]);
-			redirect('/');
 		}
 		public function SetUid($uid){
 			$_SESSION[sessionKey_Uid] = $uid;

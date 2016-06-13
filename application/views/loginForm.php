@@ -2,4 +2,5 @@
 	<input type='email' name='username' value=''/>
 	<input type='password' name='password' value=''/>
 	<input type='submit' value='Login'/>
+	<p><?=$err_msg?></p>
 </form>

@@ -41,6 +41,7 @@ $(function(){
 								$('.bookmark-row[name=bookmark-' + response.bid + ']').find(".tagscolumn").append($.bookmarkerFront.createTagView(bookmarkData.tags[i]));
 							}
 						}
+						$.bookmarkerFront.bookmarkForm.find('[name=reset]').click();
 					}else{
 						//fail
 					}
@@ -86,6 +87,7 @@ $(function(){
 						}
 					}
 					$.bookmarkerFront.tagList.droppable('enable');
+					$.bookmarkerFront.tagForm.find('[name=reset]').click();
 				}
 				,error:function(){
 					$.bookmarkerFront.tagList.droppable('enable');
@@ -101,10 +103,20 @@ $(function(){
 				,success:function(response){
 					$('.tag[name=tag-' + response.tid + ']').remove();
 				}
-				,error:function(){
-
-				}
+				,error:function(){}
 			});
+		}
+		,logout:function(){
+			window.location = "/user/logout";
+			// $.ajax({
+			// 	url:"/user/logout"
+			// 	,method:"get"
+			// 	,dataType:"json"
+			// 	,success:function(response){
+			// 		window.location = '/';
+			// 	}
+			// 	,error:function(){}
+			// });
 		}
 	}
 	$.bookmarkerFront = {
@@ -338,7 +350,12 @@ $(function(){
 		$.bookmarkerFront.bookmarkForm.hide();
 		$.bookmarkerFront.tagForm.hide();
 	});
-
+	$('#help-btn').click(function(){
+		$('#help_dialog').show();
+	});
+	$('#help_dialog>[name=close]').click(function(){
+		$('#help_dialog').hide();
+	});
 	$.bookmarkerFront.bookmarkForm.find('button.btn-close').click(function(){
 		$.bookmarkerFront.bookmarkForm.hide();
 	});
@@ -346,6 +363,10 @@ $(function(){
 	$.bookmarkerFront.searchForm.find('button.btn-close').click(function(){
 		$.bookmarkerFront.searchForm.hide();
 	});
+	$('#logout-btn').click(function(){
+		$.bookmarker.logout();
+	});
+
 	//filted form binding
 	$('input[name=logic]').on('change',$.bookmarkerFront.search);
 	$('button[name=cancel]').on('click',function(){
@@ -480,9 +501,6 @@ $(function(){
 					$.bookmarker.deleteBookmark(bookmarkData);
 				}
 			}
-
-
-
 		}
 	});
 });

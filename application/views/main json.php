@@ -8,8 +8,8 @@
 	</tr>
 	<tr class='bookmark-row template' style='display:none'>
 		<td class= 'col-xs-2'>
-			<a class='btn-xs btn-primary edit_m'>修改</a>
-			<a class='btn-xs btn-danger delete_m'>刪除</a>
+<!-- 			<a class='btn-xs btn-primary edit_m'>修改</a>
+			<a class='btn-xs btn-danger delete_m'>刪除</a> -->
 		</td>
 		<td>
 			<img src='' class='favicon'/>

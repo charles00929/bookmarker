@@ -3,14 +3,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class User extends BWTV_Controller {
 
-	public function index()
+	public function index($message = '')
 	{
 		if($this->Usermodel->IsLogined()){
 			redirect('/bookmark');
 		}else{
 			$this->loadJS('js/plugin/md5.min.js');
 			$this->loadJS('js/bookmarker_session.js');
-			$this->setBlock('main','loginForm');
+			$this->setBlock('main','loginForm',array('err_msg'=>$message));
 			$this->display();
 		}
 	}
@@ -24,9 +24,13 @@ class User extends BWTV_Controller {
 		if($this->Usermodel->IsLogined()){
 			redirect('/bookmark');
 		}else{
-
+			$this->index('Your username or password is wrong.');
 		}
 
+	}
+	public function Logout(){
+		$this->Usermodel->Logout();
+		redirect('/');
 	}
 	public function __construct(){
 		parent::__construct();

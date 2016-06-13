@@ -21,8 +21,7 @@
 		public function GetBookmarksJsonByID($u_id){
 			$bookmarks = $this->GetBookmarksFromDB($u_id);
 			$tags = $this->GetTagsFromDB($u_id);
-			$tag_on = $this->GetTagOnFromDB($this->FetchBookmarkID($bookmarks));
-
+			$tag_on = $this->GetTagOnFromDB($this->FetchBookmarkID($bookmarks));	
 			foreach ($tag_on as $match) {
 				array_push($bookmarks[$match->bid]->tags,$match->tid);
 			}
@@ -103,10 +102,12 @@
 		}
 
 		private function GetTagOnFromDB($bids){
-			$sql = 'SELECT * FROM ' . $this->tagOnTableName . ' WHERE bid IN ?';
-			$list = $this->db->query($sql,array((array)$bids))->result();
+			$list = array();
+			if(count($bids) != 0){
+				$sql = 'SELECT * FROM ' . $this->tagOnTableName . ' WHERE bid IN ?';
+				$list = $this->db->query($sql,array((array)$bids))->result();
+			}
 			return $list;
-
 		}
 
 
