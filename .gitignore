@@ -13,7 +13,8 @@ user_guide_src/cilexer/build/*
 user_guide_src/cilexer/dist/*
 user_guide_src/cilexer/pycilexer.egg-info/*
 /vendor/
-
+/session/
+/.phpintel/
 # IDE Files
 #-------------------------
 /nbproject/
@@ -25,3 +26,4 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 *.stTheme.cache
 *.sublime-workspace
 *.sublime-project
+
