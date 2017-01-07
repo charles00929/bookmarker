@@ -2,15 +2,16 @@
 class Usermodel extends CI_Model {
 	private $userTableName = 'user';
 
-	public function IsLogined() {
-		$userID = $this->session->userdata("user_id");
-		return isset($userID);
+	public function GetInternalID($userID) {
+		$sql = "SELECT id FROM user WHERE userid = ?";
+		$result = $this->db->query($sql, array($userID))->result_array();
+		$id = isset($result[0]["id"]) ? $result[0]["id"] : 0;
+		return $id;
 	}
 
-	public function IsRegister($userID) {
-		$sql = "SELECT userid FROM user WHERE userid = ?";
-		$result = $this->db->query($sql, array($userID))->result_array();
-		return count($result) > 0;
+	public function IsLogined() {
+		$internalID = $this->session->userdata("internal_id");
+		return isset($internalID);
 	}
 
 	# need to revise
@@ -35,7 +36,8 @@ class Usermodel extends CI_Model {
 			, "user_id"
 			, "nickname"
 			, "username"
-			, "picture",
+			, "picture"
+			, "internal_id",
 		);
 		$this->session->unset_userdata($unsetKeys);
 		redirect("/");
@@ -55,12 +57,7 @@ class Usermodel extends CI_Model {
 		$this->db->trans_complete();
 	}
 
-	# need to revise
-	public function SetUid($uid) {
-		$_SESSION[sessionKey_Uid] = $uid;
-	}
-
-	public function SetUserData($data = array()) {
+	public function SignIn($data = array()) {
 		$this->session->set_userdata($data);
 	}
 

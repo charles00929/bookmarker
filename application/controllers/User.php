@@ -27,10 +27,13 @@ class User extends BWTV_Controller {
 				, "username" => $userinfo['username']
 				, "picture" => $userinfo['picture'], // url;
 			);
-			$this->Usermodel->SetUserData($fetchedData);
-			if (!$this->Usermodel->IsRegister($fetchedData["user_id"])) {
-				$this->Usermodel->Register($fetchedData["user_id"], $fetchedData["provider"]);
+			$internalID = $this->Usermodel->GetInternalID($fetchedData["user_id"]);
+			if ($internalID == 0) {
+				$internalID = $this->Usermodel->Register($fetchedData["user_id"], $fetchedData["provider"]);
 			}
+			$fetchedData["internal_id"] = $internalID;
+			$this->Usermodel->SignIn($fetchedData);
+
 			redirect("/bookmark");
 		}
 	}
