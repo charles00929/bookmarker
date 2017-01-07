@@ -1,14 +1,38 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+use Auth0\SDK\API\Authentication;
+use Auth0\SDK\Auth0;
+use Auth0\SDK\JWTVerifier;
 
 class User extends BWTV_Controller {
-	public function Auth0Login() {
-		$this->load->view("auth0loginform");
-	}
-
 	public function Auth0LoginCallback() {
-		var_dump($this->input->get);
-		//$auth0->getUser();
+		$code = $this->input->get("code");
+		$this->load->config("auth0");
+		$auth0Config = $this->config->item("auth0");
+		$auth0 = new Auth0(array(
+			'domain' => $auth0Config["domain"]
+			, 'client_id' => $auth0Config["client_id"]
+			, 'client_secret' => $auth0Config["client_secret"]
+			, 'redirect_uri' => $auth0Config["callback_url"],
+		));
+		$userinfo = $auth0->getUser();
+		if (empty($userinfo)) {
+			//echo "error";
+		} else {
+			$fetchedData = array(
+				"email" => $userinfo['email']
+				, "provider" => $userinfo['identities'][0]['provider']
+				, "user_id" => $userinfo['identities'][0]['user_id']
+				, "nickname" => $userinfo['nickname']
+				, "username" => $userinfo['username']
+				, "picture" => $userinfo['picture'], // url;
+			);
+			$this->Usermodel->SetUserData($fetchedData);
+			if (!$this->Usermodel->IsRegister($fetchedData["user_id"])) {
+				$this->Usermodel->Register($fetchedData["user_id"], $fetchedData["provider"]);
+			}
+			redirect("/bookmark");
+		}
 	}
 
 	public function Login() {
@@ -17,18 +41,18 @@ class User extends BWTV_Controller {
 		if (empty($username) || empty($pw)) {
 			show_error('Your operation is not allowed.');
 		}
-		$result = $this->curl->Post("oauth/ro",
-			array(
-				"client_id" => "vx2b0X6B0uSNyS3Y4O1PG0EtiKmHnUy2"
-				,"username" => "$username"
-				,"password" => "$pw"
-				,"connection" => "DB"
-				,"grant_type" => "password"
-				,"scope" => "openid"
-				)
-		);
-		var_dump($this->curl->GetResponse());
-		var_dump($this->curl->GetError());
+		$this->load->config("auth0");
+		$auth0Config = $this->config->item("auth0");
+
+		$auth0Api = new Authentication($auth0Config["domain"], $auth0Config["client_id"], $auth0Config["client_secret"]);
+		$token = $auth0Api->authorize_with_ro($username, $pw, "openid", "DB");
+
+		$verifier = new JWTVerifier([
+			'valid_audiences' => [$auth0Config["client_id"]],
+			'client_secret' => $auth0Config["client_secret"],
+		]);
+
+		$decoded = $verifier->verifyAndDecode($token["id_token"]);
 	}
 
 	public function Logout() {
@@ -39,7 +63,7 @@ class User extends BWTV_Controller {
 	public function __construct() {
 		parent::__construct();
 		$this->load->library("ComposerLoader");
-		$this->load->library("Curl", array("host" => "https://bwtv.au.auth0.com"));
+		$this->load->library("session");
 		$this->load->helper("url");
 		$this->load->model('Usermodel');
 	}
@@ -50,7 +74,7 @@ class User extends BWTV_Controller {
 		} else {
 			$this->loadJS('js/plugin/md5.min.js');
 			$this->loadJS('js/bookmarker_session.js');
-			$this->setBlock('main', 'loginForm', array('err_msg' => $message));
+			$this->setBlock('main', 'auth0loginform', array('err_msg' => $message));
 			$this->display();
 		}
 	}
