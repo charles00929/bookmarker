@@ -40,7 +40,6 @@ class Usermodel extends CI_Model {
 			, "internal_id",
 		);
 		$this->session->unset_userdata($unsetKeys);
-		redirect("/");
 	}
 
 	public function Register($userID, $provider = "bookmarker") {

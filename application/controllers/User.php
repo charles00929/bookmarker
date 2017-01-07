@@ -1,21 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-use Auth0\SDK\API\Authentication;
-use Auth0\SDK\Auth0;
-use Auth0\SDK\JWTVerifier;
 
 class User extends BWTV_Controller {
-	public function Auth0LoginCallback() {
+	public function InternalLogin() {
 		$code = $this->input->get("code");
-		$this->load->config("auth0");
-		$auth0Config = $this->config->item("auth0");
-		$auth0 = new Auth0(array(
-			'domain' => $auth0Config["domain"]
-			, 'client_id' => $auth0Config["client_id"]
-			, 'client_secret' => $auth0Config["client_secret"]
-			, 'redirect_uri' => $auth0Config["callback_url"],
-		));
-		$userinfo = $auth0->getUser();
+		$userinfo = $this->Auth0UserModel->GetUser();
 		if (empty($userinfo)) {
 			//echo "error";
 		} else {
@@ -38,28 +27,9 @@ class User extends BWTV_Controller {
 		}
 	}
 
-	public function Login() {
-		$username = $this->input->post('username');
-		$pw = $this->input->post('password');
-		if (empty($username) || empty($pw)) {
-			show_error('Your operation is not allowed.');
-		}
-		$this->load->config("auth0");
-		$auth0Config = $this->config->item("auth0");
-
-		$auth0Api = new Authentication($auth0Config["domain"], $auth0Config["client_id"], $auth0Config["client_secret"]);
-		$token = $auth0Api->authorize_with_ro($username, $pw, "openid", "DB");
-
-		$verifier = new JWTVerifier([
-			'valid_audiences' => [$auth0Config["client_id"]],
-			'client_secret' => $auth0Config["client_secret"],
-		]);
-
-		$decoded = $verifier->verifyAndDecode($token["id_token"]);
-	}
-
 	public function Logout() {
-		$this->Usermodel->Logout();
+		$this->Usermodel->Logout(); // remove internal session
+		$this->Auth0UserModel->Logout(); // remove auth0 session and data
 		redirect('/');
 	}
 
@@ -69,6 +39,7 @@ class User extends BWTV_Controller {
 		$this->load->library("session");
 		$this->load->helper("url");
 		$this->load->model('Usermodel');
+		$this->load->model("Auth0UserModel");
 	}
 
 	public function index($message = '') {

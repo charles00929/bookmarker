@@ -2,8 +2,7 @@
 <script>
   var lock = new Auth0Lock('vx2b0X6B0uSNyS3Y4O1PG0EtiKmHnUy2', 'bwtv.au.auth0.com', {
     auth: {
-      //redirectUrl: 'user/Auth0LoginCallback',
-      redirectUrl: 'http://bookmarker.localhost/user/Auth0LoginCallback',
+      redirectUrl: 'http://bookmarker.localhost/user/InternalLogin',
       responseType: 'code',
       params: {
         scope: 'openid email' // Learn about scopes: https://auth0.com/docs/scopes
