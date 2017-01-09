@@ -42,13 +42,13 @@ class User extends BWTV_Controller {
 		$this->load->model("Auth0UserModel");
 	}
 
-	public function index($message = '') {
+	public function index() {
 		if ($this->Usermodel->IsLogined()) {
 			redirect('/bookmark');
 		} else {
 			$this->loadJS('js/plugin/md5.min.js');
 			$this->loadJS('js/bookmarker_session.js');
-			$this->setBlock('main', 'auth0loginform', array('err_msg' => $message));
+			$this->setBlock('main', 'auth0loginform', array('config' => $this->Auth0UserModel->GetConfig()));
 			$this->display();
 		}
 	}
