@@ -1,65 +1,45 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-use Auth0\SDK\Auth0;
 
 class User extends BWTV_Controller {
-	public function Auth0Login() {
-		try {
-			$auth0 = new Auth0(array(
-				'domain' => 'bwtv.au.auth0.com',
-				'client_id' => 'vx2b0X6B0uSNyS3Y4O1PG0EtiKmHnUy2',
-				'client_secret' => 'I9ElLAMSYfhBodFu2PYg33o0T6rF-Db1OX5Nraci-vPDLzfOJlnyVi9YdvuiiiIR',
-				'redirect_uri' => 'https://../Auth0LoginCallback',
-			));
-		} catch (Exception $ex) {
-			echo $ex;
-		}
-	}
-
-	public function Auth0LoginCallback() {
-		echo "call back";
-	}
-
-	public function Login() {
-		$username = $this->input->post('username');
-		$md5pw = $this->input->post('password');
-		if (empty($username) || empty($md5pw)) {
-			show_error('Your operation is not allowed.');
-		}
-		$this->Usermodel->Login($username, $md5pw);
-		if ($this->Usermodel->IsLogined()) {
-			redirect('/bookmark');
+	public function InternalLogin() {
+		$code = $this->input->get("code");
+		$userinfo = $this->Auth0UserModel->GetUser();
+		if (empty($userinfo)) {
+			//echo "error";
 		} else {
-			$this->index('Your username or password is wrong.');
-		}
+			$fetchedData = array(
+				"email" => $userinfo['email']
+				, "provider" => $userinfo['identities'][0]['provider']
+				, "user_id" => $userinfo['identities'][0]['user_id']
+				, "nickname" => $userinfo['nickname']
+				, "username" => $userinfo['username']
+				, "picture" => $userinfo['picture'], // url;
+			);
+			$internalID = $this->Usermodel->GetInternalID($fetchedData["user_id"]);
+			if ($internalID == 0) {
+				$internalID = $this->Usermodel->Register($fetchedData["user_id"], $fetchedData["provider"]);
+			}
+			$fetchedData["internal_id"] = $internalID;
+			$this->Usermodel->SignIn($fetchedData);
 
+			redirect("/bookmark");
+		}
 	}
 
 	public function Logout() {
-		$this->Usermodel->Logout();
+		$this->Usermodel->Logout(); // remove internal session
+		$this->Auth0UserModel->Logout(); // remove auth0 session and data
 		redirect('/');
 	}
 
 	public function __construct() {
 		parent::__construct();
+		$this->load->library("ComposerLoader");
+		$this->load->library("session");
+		$this->load->helper("url");
 		$this->load->model('Usermodel');
-		//$this->load->library('session');
-		/*$this->loadJS('js/jquery-1.10.2.js');
-	$this->loadJS('js/login.js');//if.....
-	$this->loadJS('js/formChecker.js');
-	$this->loadJS('js/bootstrap.js');
-	$this->loadJS('js/bootstrap.min.js');
-
-	$this->loadCSS('css/layout.css');
-	$this->loadCSS('css/bootstrap-theme.css');
-	$this->loadCSS('css/bootstrap-theme.min.css');
-	$this->loadCSS('css/bootstrap.css');
-	$this->loadCSS('css/bootstrap.min.css');
-
-	$this->setBlock('layout/header','header');
-	$this->setBlock('menu/main_menu','menu');
-	$this->setBlock('session','menu');
-	$this->setBlock('layout/footer','footer');*/
+		$this->load->model("Auth0UserModel");
 	}
 
 	public function index($message = '') {
@@ -68,7 +48,7 @@ class User extends BWTV_Controller {
 		} else {
 			$this->loadJS('js/plugin/md5.min.js');
 			$this->loadJS('js/bookmarker_session.js');
-			$this->setBlock('main', 'loginForm', array('err_msg' => $message));
+			$this->setBlock('main', 'auth0loginform', array('err_msg' => $message));
 			$this->display();
 		}
 	}
